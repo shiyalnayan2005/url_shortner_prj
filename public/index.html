@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project - URL Shortner</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔗 URL Shortner</h1>
+      <form id="shorten-form" class="card">
+        <div class="form-group">
+          <label for="url">Enter URL :</label>
+          <input type="url" name="url" id="url" required placeholder="https://example.com" />
+        </div>
+        <div class="form-group">
+          <label for="shortCode">Enter shortCode :</label>
+          <input type="text" name="shortCode" id="shortCode" placeholder="my-link" />
+        </div>
+        <button type="submit">Shorten</button>
+      </form>
+
+      <h2>📜 Shortened URLs</h2>
+      <ul id="shortened-urls" class="url-list"></ul>
+    </div>
+
+    <script>
+      async function fetchShortenedLinks() {
+        const res = await fetch("/links");
+        const links = await res.json();
+
+        const list = document.getElementById("shortened-urls");
+        list.innerHTML = "";
+        for (const [shortCode, url] of Object.entries(links)) {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <a href='/${shortCode}' target='_blank' class="url-short">
+                ${window.location.origin}/${shortCode}
+            </a>
+            <span class="url-original">${url}</span>
+        `;
+          list.appendChild(li);
+        }
+      }
+
+      fetchShortenedLinks();
+
+      document
+        .getElementById("shorten-form")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const formData = new FormData(event.target);
+          const url = formData.get("url");
+          const shortCode = formData.get("shortCode");
+
+          try {
+            const res = await fetch("/shorten", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url, shortCode }),
+            });
+
+            if (res.ok) {
+              alert("Link Created Successfully...");
+              fetchShortenedLinks();
+              event.target.reset();
+            } else {
+              const errorMessage = await res.text();
+              alert(errorMessage);
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        });
+    </script>
+  </body>
+</html>
